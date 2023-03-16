@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   LayoutChangeEvent,
   StyleSheet,
@@ -7,6 +7,8 @@ import {
 } from 'react-native'
 import PagerView from 'react-native-pager-view'
 import Animated, {
+  FadeIn,
+  Layout,
   runOnJS,
   runOnUI,
   useAnimatedReaction,
@@ -81,6 +83,10 @@ export const Container = React.memo(
         onTabChange,
         width: customWidth,
         allowHeaderOverscroll,
+        scrollHeader,
+        headerTranslateY: externalHeaderTranslateY,
+        renderCustomHeader,
+        renderTabBarShimmer,
       },
       ref
     ) => {
@@ -102,6 +108,7 @@ export const Container = React.memo(
       const headerHeight = useSharedValue<number | undefined>(
         !renderHeader ? 0 : initialHeaderHeight
       )
+      const [headerHeightState, setHeaderHeightState] = useState(0)
 
       const contentInset = useDerivedValue(() => {
         if (allowHeaderOverscroll) return 0
@@ -249,10 +256,24 @@ export const Container = React.memo(
       )
 
       const headerTranslateY = useDerivedValue(() => {
+        if (externalHeaderTranslateY) {
+          externalHeaderTranslateY.value = Math.min(
+            scrollYCurrent.value,
+            headerScrollDistance.value
+          )
+        }
         return revealHeaderOnScroll
           ? -accDiffClamp.value
           : -Math.min(scrollYCurrent.value, headerScrollDistance.value)
       }, [revealHeaderOnScroll])
+
+      useAnimatedReaction(
+        () => {
+          if (scrollHeader) scrollHeader.value = scrollYCurrent.value
+        },
+        (_current) => {},
+        [scrollYCurrent]
+      )
 
       const stylez = useAnimatedStyle(() => {
         return {
@@ -267,6 +288,7 @@ export const Container = React.memo(
       const getHeaderHeight = React.useCallback(
         (event: LayoutChangeEvent) => {
           const height = event.nativeEvent.layout.height
+          setHeaderHeightState(height)
           if (headerHeight.value !== height) {
             headerHeight.value = height
           }
@@ -404,24 +426,70 @@ export const Container = React.memo(
                     tabProps,
                   })}
               </View>
-              <View
-                style={[styles.container, styles.tabBarContainer]}
-                onLayout={getTabBarHeight}
-                pointerEvents="box-none"
-              >
-                {renderTabBar &&
-                  renderTabBar({
-                    containerRef,
-                    index,
-                    tabNames: tabNamesArray,
-                    focusedTab,
-                    indexDecimal,
-                    width,
-                    onTabPress,
-                    tabProps,
-                  })}
-              </View>
+              {renderTabBarShimmer ? (
+                <>
+                  {headerHeightState ? (
+                    <Animated.View style={{ height: TABBAR_HEIGHT }} />
+                  ) : (
+                    <>{renderTabBarShimmer}</>
+                  )}
+                </>
+              ) : (
+                <Animated.View style={{ height: TABBAR_HEIGHT }} />
+              )}
             </Animated.View>
+            {headerHeightState ? (
+              <Animated.View
+                layout={Layout}
+                entering={FadeIn}
+                pointerEvents="box-none"
+                style={[
+                  // styles.topContainer,
+                  headerContainerStyle,
+                  !cancelTranslation && stylez,
+                  {
+                    top: headerHeightState,
+                    position: 'absolute',
+                    zIndex: 1000,
+                    width: '100%',
+                    backgroundColor: 'white',
+                  },
+                ]}
+              >
+                <View
+                  style={[styles.container, styles.tabBarContainer]}
+                  onLayout={getTabBarHeight}
+                  pointerEvents="box-none"
+                >
+                  {renderTabBar &&
+                    renderTabBar({
+                      containerRef,
+                      index,
+                      tabNames: tabNamesArray,
+                      focusedTab,
+                      indexDecimal,
+                      width,
+                      onTabPress,
+                      tabProps,
+                    })}
+                </View>
+              </Animated.View>
+            ) : (
+              <></>
+            )}
+            {
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 200,
+                }}
+              >
+                {renderCustomHeader && renderCustomHeader}
+              </Animated.View>
+            }
 
             <AnimatedPagerView
               ref={containerRef}
@@ -466,7 +534,7 @@ const styles = StyleSheet.create({
   },
   topContainer: {
     position: 'absolute',
-    zIndex: 100,
+    zIndex: 10,
     width: '100%',
     backgroundColor: 'white',
     shadowColor: '#000000',
@@ -479,7 +547,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   tabBarContainer: {
-    zIndex: 1,
+    zIndex: 100,
   },
   headerContainer: {
     zIndex: 2,

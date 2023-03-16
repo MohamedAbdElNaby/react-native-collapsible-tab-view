@@ -7,7 +7,7 @@ import {
   ViewStyle,
 } from 'react-native'
 import PagerView, { PagerViewProps } from 'react-native-pager-view'
-import Animated from 'react-native-reanimated'
+import Animated, { SharedValue } from 'react-native-reanimated'
 
 export type ContainerRef = PagerView
 
@@ -91,7 +91,14 @@ export type CollapsibleProps = {
   renderHeader?: (props: TabBarProps<TabName>) => React.ReactElement | null
 
   renderTabBar?: (props: TabBarProps<TabName>) => React.ReactElement | null
-
+  scrollHeader?: SharedValue<number>
+  headerTranslateY?: SharedValue<number>
+  renderCustomHeader?: (
+    props: TabBarProps<TabName>
+  ) => React.ReactElement | null
+  renderTabBarShimmer?: (
+    props: TabBarProps<TabName>
+  ) => React.ReactElement | null
   headerContainerStyle?: StyleProp<Animated.AnimateStyle<ViewStyle>>
   containerStyle?: StyleProp<ViewStyle>
   cancelTranslation?: boolean
