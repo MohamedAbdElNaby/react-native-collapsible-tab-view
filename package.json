@@ -79,12 +79,6 @@
     "react-native-pager-view": "*",
     "react-native-reanimated": ">=3.0.1"
   },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "pre-commit": "yarn lint && yarn typescript"
-    }
-  },
   "jest": {
     "preset": "react-native",
     "modulePathIgnorePatterns": [
