@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   LayoutChangeEvent,
   StyleSheet,
@@ -11,6 +11,8 @@ import Animated, {
   Layout,
   runOnJS,
   runOnUI,
+  scrollTo,
+  useAnimatedGestureHandler,
   useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
@@ -37,9 +39,15 @@ import {
   IndexChangeEventData,
   TabName,
 } from './types'
+import {
+  PanGestureHandler,
+  PanGestureHandlerGestureEvent,
+} from 'react-native-gesture-handler'
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
-
+type PanContextType = {
+  translateY: number
+}
 /**
  * Basic usage looks like this:
  *
@@ -106,7 +114,7 @@ export const Container = React.memo(
       )
 
       const headerHeight = useSharedValue<number | undefined>(
-        !renderHeader ? 250 : initialHeaderHeight
+        !renderHeader ? 0 : initialHeaderHeight
       )
       const [headerHeightState, setHeaderHeightState] = useState(0)
 
@@ -127,7 +135,7 @@ export const Container = React.memo(
       const accDiffClamp: ContextType['accDiffClamp'] = useSharedValue(0)
       const scrollYCurrent: ContextType['scrollYCurrent'] = useSharedValue(0)
       const scrollY: ContextType['scrollY'] = useSharedValue(
-        tabNamesArray.map(() => 0)
+        tabNamesArray.map(() => 1000)
       )
 
       const contentHeights: ContextType['contentHeights'] = useSharedValue(
@@ -244,7 +252,10 @@ export const Container = React.memo(
         },
         []
       )
+      // useEffect(()=>{
 
+      //     scrollYCurrent.value=100
+      // },[])
       useAnimatedReaction(
         () => headerHeight.value,
         (_current, prev) => {
@@ -367,7 +378,22 @@ export const Container = React.memo(
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [onTabPress]
       )
-
+      const panGestureEvent = useAnimatedGestureHandler<
+        PanGestureHandlerGestureEvent,
+        PanContextType
+      >({
+        onStart: (event, context) => {
+          context.translateY = scrollYCurrent.value
+        },
+        onActive: (event, context) => {
+          'worklet'
+          for (const name of tabNamesArray) {
+            const ref = refMap[name]
+            scrollTo(ref, 0, -event.translationY + context.translateY, true)
+          }
+        },
+        onEnd: (event) => {},
+      })
       return (
         <Context.Provider
           value={{
@@ -402,60 +428,65 @@ export const Container = React.memo(
             onLayout={onLayout}
             pointerEvents="box-none"
           >
-            <Animated.View
-              pointerEvents="box-none"
-              style={[
-                styles.topContainer,
-                headerContainerStyle,
-                !cancelTranslation && stylez,
-              ]}
+            <PanGestureHandler
+              // activeOffsetX={[-10, 10]} //fix cant scroll while press on PanGestureHandler View
+              onGestureEvent={panGestureEvent}
             >
-              <View
-                style={[styles.container, styles.headerContainer]}
-                onLayout={getHeaderHeight}
-                pointerEvents="box-none"
+              <Animated.View
+                //   pointerEvents="box-none"
+                style={[
+                  styles.topContainer,
+                  headerContainerStyle,
+                  !cancelTranslation && stylez,
+                ]}
               >
-                {renderHeader &&
-                  renderHeader({
-                    containerRef,
-                    index,
-                    tabNames: tabNamesArray,
-                    focusedTab,
-                    indexDecimal,
-                    onTabPress,
-                    tabProps,
-                  })}
-              </View>
-              {IS_IOS ? (
-                <>
-                  {renderTabBar &&
-                    renderTabBar({
+                <View
+                  style={[styles.container, styles.headerContainer]}
+                  onLayout={getHeaderHeight}
+                  pointerEvents="box-none"
+                >
+                  {renderHeader &&
+                    renderHeader({
                       containerRef,
                       index,
                       tabNames: tabNamesArray,
                       focusedTab,
                       indexDecimal,
-                      width,
                       onTabPress,
                       tabProps,
                     })}
-                </>
-              ) : (
-                <>
-                  {renderTabBarShimmer ? (
-                    <>
-                      {headerHeightState ? (
-                        <Animated.View style={{ height: TABBAR_HEIGHT }} />
-                      ) : (
-                        <>{renderTabBarShimmer}</>
-                      )}
-                    </>
-                  ) : (
-                    <Animated.View style={{ height: TABBAR_HEIGHT }} />
-                  )}
-                </>
-              )}
-            </Animated.View>
+                </View>
+                {IS_IOS ? (
+                  <>
+                    {renderTabBar &&
+                      renderTabBar({
+                        containerRef,
+                        index,
+                        tabNames: tabNamesArray,
+                        focusedTab,
+                        indexDecimal,
+                        width,
+                        onTabPress,
+                        tabProps,
+                      })}
+                  </>
+                ) : (
+                  <>
+                    {renderTabBarShimmer ? (
+                      <>
+                        {headerHeightState ? (
+                          <Animated.View style={{ height: TABBAR_HEIGHT }} />
+                        ) : (
+                          <>{renderTabBarShimmer}</>
+                        )}
+                      </>
+                    ) : (
+                      <Animated.View style={{ height: TABBAR_HEIGHT }} />
+                    )}
+                  </>
+                )}
+              </Animated.View>
+            </PanGestureHandler>
             {IS_IOS ? (
               <></>
             ) : (
