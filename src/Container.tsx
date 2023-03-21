@@ -382,7 +382,7 @@ export const Container = React.memo(
         PanGestureHandlerGestureEvent,
         PanContextType
       >({
-        onStart: (event, context) => {
+        onStart: (_, context) => {
           context.translateY = scrollYCurrent.value
         },
         onActive: (event, context) => {
@@ -392,7 +392,7 @@ export const Container = React.memo(
             scrollTo(ref, 0, -event.translationY + context.translateY, true)
           }
         },
-        onEnd: (event) => {},
+        onEnd: (_) => {},
       })
       return (
         <Context.Provider
