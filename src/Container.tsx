@@ -106,7 +106,7 @@ export const Container = React.memo(
       )
 
       const headerHeight = useSharedValue<number | undefined>(
-        !renderHeader ? 0 : initialHeaderHeight
+        !renderHeader ? 250 : initialHeaderHeight
       )
       const [headerHeightState, setHeaderHeightState] = useState(0)
 
@@ -426,41 +426,8 @@ export const Container = React.memo(
                     tabProps,
                   })}
               </View>
-              {renderTabBarShimmer ? (
+              {IS_IOS ? (
                 <>
-                  {headerHeightState ? (
-                    <Animated.View style={{ height: TABBAR_HEIGHT }} />
-                  ) : (
-                    <>{renderTabBarShimmer}</>
-                  )}
-                </>
-              ) : (
-                <Animated.View style={{ height: TABBAR_HEIGHT }} />
-              )}
-            </Animated.View>
-            {headerHeightState ? (
-              <Animated.View
-                layout={Layout}
-                entering={FadeIn}
-                pointerEvents="box-none"
-                style={[
-                  // styles.topContainer,
-                  headerContainerStyle,
-                  !cancelTranslation && stylez,
-                  {
-                    top: headerHeightState,
-                    position: 'absolute',
-                    zIndex: 1000,
-                    width: '100%',
-                    backgroundColor: 'white',
-                  },
-                ]}
-              >
-                <View
-                  style={[styles.container, styles.tabBarContainer]}
-                  onLayout={getTabBarHeight}
-                  pointerEvents="box-none"
-                >
                   {renderTabBar &&
                     renderTabBar({
                       containerRef,
@@ -472,10 +439,67 @@ export const Container = React.memo(
                       onTabPress,
                       tabProps,
                     })}
-                </View>
-              </Animated.View>
-            ) : (
+                </>
+              ) : (
+                <>
+                  {renderTabBarShimmer ? (
+                    <>
+                      {headerHeightState ? (
+                        <Animated.View style={{ height: TABBAR_HEIGHT }} />
+                      ) : (
+                        <>{renderTabBarShimmer}</>
+                      )}
+                    </>
+                  ) : (
+                    <Animated.View style={{ height: TABBAR_HEIGHT }} />
+                  )}
+                </>
+              )}
+            </Animated.View>
+            {IS_IOS ? (
               <></>
+            ) : (
+              <>
+                {headerHeightState ? (
+                  <Animated.View
+                    layout={Layout}
+                    entering={FadeIn}
+                    pointerEvents="box-none"
+                    style={[
+                      // styles.topContainer,
+                      headerContainerStyle,
+                      !cancelTranslation && stylez,
+                      {
+                        top: headerHeightState,
+                        position: 'absolute',
+                        zIndex: 1000,
+                        width: '100%',
+                        backgroundColor: 'white',
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[styles.container, styles.tabBarContainer]}
+                      onLayout={getTabBarHeight}
+                      pointerEvents="box-none"
+                    >
+                      {renderTabBar &&
+                        renderTabBar({
+                          containerRef,
+                          index,
+                          tabNames: tabNamesArray,
+                          focusedTab,
+                          indexDecimal,
+                          width,
+                          onTabPress,
+                          tabProps,
+                        })}
+                    </View>
+                  </Animated.View>
+                ) : (
+                  <></>
+                )}
+              </>
             )}
             {
               <Animated.View
