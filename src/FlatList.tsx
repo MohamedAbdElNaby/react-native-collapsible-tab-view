@@ -44,7 +44,6 @@ function FlatListImpl<R>(
     contentInset,
     scrollYCurrent,
     focusedTab,
-    headerTranslateY,
     headerHeight,
   } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
@@ -56,7 +55,7 @@ function FlatListImpl<R>(
       // );
       return scrollYCurrent.value, headerHeight.value
     },
-    (translatY, header) => {
+    (_, header) => {
       if (scrollYCurrent.value >= 0 && focusedTab.value != name) {
         scrollTo(
           ref,
