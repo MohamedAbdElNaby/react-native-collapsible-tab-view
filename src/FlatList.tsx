@@ -1,7 +1,7 @@
 import React from 'react'
-import { FlatListProps,  } from 'react-native'
+import { FlatListProps, FlatList as RNFlatList } from 'react-native'
 import { scrollTo, useAnimatedReaction } from 'react-native-reanimated'
-import { FlatList as RNFlatList } from 'react-native-gesture-handler'
+// import { FlatList as RNFlatList } from 'react-native-gesture-handler'
 
 import { AnimatedFlatList } from './helpers'
 import {
@@ -39,20 +39,37 @@ function FlatListImpl<R>(
   passRef: React.Ref<RNFlatList>
 ): React.ReactElement {
   const name = useTabNameContext()
-  const { setRef, contentInset,scrollYCurrent,focusedTab,headerTranslateY,headerHeight } = useTabsContext()
+  const {
+    setRef,
+    contentInset,
+    scrollYCurrent,
+    focusedTab,
+    headerTranslateY,
+    headerHeight,
+  } = useTabsContext()
   const ref = useSharedAnimatedRef<RNFlatList<unknown>>(passRef)
 
-  const { scrollHandler, enable, } = useScrollHandlerY(name)
-  useAnimatedReaction(()=>{
-    // console.log('scrollYCurrent----->',scrollYCurrent,refMap
-    // );
-return (scrollYCurrent.value,headerHeight.value)
-  },(translatY,header)=>{
-
-    if(scrollYCurrent.value>=0&&focusedTab.value!=name)
-    {scrollTo(ref, 0,scrollYCurrent.value>=(header||0)-90?(header||0)-90:scrollYCurrent.value, true)}
-
-  },[scrollYCurrent,headerHeight])
+  const { scrollHandler, enable } = useScrollHandlerY(name)
+  useAnimatedReaction(
+    () => {
+      // console.log('scrollYCurrent----->',scrollYCurrent,refMap
+      // );
+      return scrollYCurrent.value, headerHeight.value
+    },
+    (translatY, header) => {
+      if (scrollYCurrent.value >= 0 && focusedTab.value != name) {
+        scrollTo(
+          ref,
+          0,
+          scrollYCurrent.value >= (header || 0) - 90
+            ? (header || 0) - 90
+            : scrollYCurrent.value,
+          true
+        )
+      }
+    },
+    [scrollYCurrent, headerHeight]
+  )
   useAfterMountEffect(() => {
     // we enable the scroll event after mounting
     // otherwise we get an `onScroll` call with the initial scroll position which can break things
@@ -112,28 +129,29 @@ return (scrollYCurrent.value,headerHeight.value)
   const memoStyle = React.useMemo(() => [_style, style], [_style, style])
 
   return (
-      <>
-
-  {  // @ts-expect-error typescript complains about `unknown` in the memo, it should be T
-    <FlatListMemo
-      {...rest}
-      ref={ref}
-      bouncesZoom={false}
-      style={[memoStyle,]}
-      contentContainerStyle={memoContentContainerStyle}
-      progressViewOffset={progressViewOffset}
-      onScroll={scrollHandler}
-      onContentSizeChange={scrollContentSizeChangeHandlers}
-      scrollEventThrottle={16}
-      contentInset={memoContentInset}
-      contentOffset={memoContentOffset}
-      automaticallyAdjustContentInsets={false}
-      refreshControl={memoRefreshControl}
-    //   ListHeaderComponent={<View style={{height:100}} />}
-      // workaround for: https://github.com/software-mansion/react-native-reanimated/issues/2735
-      //   onMomentumScrollEnd={() => {}}
-      />}
-      </>
+    <>
+      {
+        // @ts-expect-error typescript complains about `unknown` in the memo, it should be T
+        <FlatListMemo
+          {...rest}
+          ref={ref}
+          bouncesZoom={false}
+          style={[memoStyle]}
+          contentContainerStyle={memoContentContainerStyle}
+          progressViewOffset={progressViewOffset}
+          onScroll={scrollHandler}
+          onContentSizeChange={scrollContentSizeChangeHandlers}
+          scrollEventThrottle={16}
+          contentInset={memoContentInset}
+          contentOffset={memoContentOffset}
+          automaticallyAdjustContentInsets={false}
+          refreshControl={memoRefreshControl}
+          //   ListHeaderComponent={<View style={{height:100}} />}
+          // workaround for: https://github.com/software-mansion/react-native-reanimated/issues/2735
+          //   onMomentumScrollEnd={() => {}}
+        />
+      }
+    </>
   )
 }
 
@@ -143,4 +161,3 @@ return (scrollYCurrent.value,headerHeight.value)
 export const FlatList = React.forwardRef(FlatListImpl) as <T>(
   p: FlatListProps<T> & { ref?: React.Ref<RNFlatList<T>> }
 ) => React.ReactElement
-
