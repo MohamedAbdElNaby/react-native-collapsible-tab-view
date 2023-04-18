@@ -51,7 +51,6 @@ function FlatListImpl<R>(
   const { scrollHandler, enable } = useScrollHandlerY(name)
   useAnimatedReaction(
     () => {
-      console.log('scrollYCurrent----->', scrollYCurrent)
       return scrollYCurrent.value, headerHeight.value
     },
     (_, header) => {
